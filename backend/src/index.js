@@ -125,9 +125,22 @@ app.post('/hotels/:hotelId/room-types', async (req, res) => {
   const hotelId = Number(req.params.hotelId);
   const { name, availability, date } = req.body;
   try {
+    // Create the room type first
     const roomType = await prisma.roomType.create({
-      data: { name, hotelId, availability, date: date ? new Date(date) : undefined }
+      data: { name, hotelId }
     });
+
+    // If availability and date are provided, create initial inventory
+    if (availability && date) {
+      await prisma.roomInventory.create({
+        data: {
+          roomTypeId: roomType.id,
+          date: new Date(date),
+          availability: Number(availability)
+        }
+      });
+    }
+
     res.status(201).json(roomType);
   } catch (e) {
     res.status(400).json({ error: e.message });
